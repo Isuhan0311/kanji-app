@@ -10,6 +10,11 @@ interface Props {
 export default function Review({ cards, onAnswer, onDone }: Props) {
   const [i, setI] = useState(0);
   const [revealed, setRevealed] = useState(false);
+
+  if (cards.length === 0) {
+    return <div className="muted">복습할 카드가 없어요.</div>;
+  }
+
   const card = cards[i];
 
   const answer = (known: boolean) => {

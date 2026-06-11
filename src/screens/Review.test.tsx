@@ -26,3 +26,8 @@ test('알아요/몰라요가 기록되고 다음 카드로 넘어가며, 끝나�
   expect(onAnswer).toHaveBeenCalledWith('休', false);
   expect(onDone).toHaveBeenCalled();
 });
+
+test('카드가 없으면 안내 문구를 보여준다', () => {
+  render(<Review cards={[]} onAnswer={() => {}} onDone={() => {}} />);
+  expect(screen.getByText('복습할 카드가 없어요.')).toBeTruthy();
+});
