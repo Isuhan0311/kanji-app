@@ -1,4 +1,4 @@
-import { createWriteStream, existsSync, mkdirSync } from 'node:fs';
+import { createWriteStream, existsSync, mkdirSync, unlinkSync } from 'node:fs';
 import { pipeline } from 'node:stream/promises';
 import { Readable } from 'node:stream';
 import { createGunzip } from 'node:zlib';
@@ -52,9 +52,15 @@ async function download(url: string, dest: string, unzip?: 'gz' | 'bz2') {
   if (!res.ok || !res.body) throw new Error(`${res.status} ${url}`);
   const body = Readable.fromWeb(res.body as never);
   const out = createWriteStream(path);
-  if (unzip === 'gz') await pipeline(body, createGunzip(), out);
-  else if (unzip === 'bz2') await pipeline(body, bz2(), out);
-  else await pipeline(body, out);
+  try {
+    if (unzip === 'gz') await pipeline(body, createGunzip(), out);
+    else if (unzip === 'bz2') await pipeline(body, bz2(), out);
+    else await pipeline(body, out);
+  } catch (err) {
+    out.destroy();
+    if (existsSync(path)) unlinkSync(path);
+    throw err;
+  }
 }
 
 async function main() {
