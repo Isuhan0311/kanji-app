@@ -35,8 +35,9 @@
 
 ### 입력 소스
 - **KANJIDIC2** (EDRDG, CC BY-SA): 한자별 음독/훈독, JLPT 급수, 획수
-- **JMdict** (EDRDG, CC BY-SA): 단어 사전 — 급수별 어휘 목록과 교차해 예시 단어 추출
-- **JLPT 급수별 한자/어휘 목록** (공개 정리본): N5~N2 범위 결정
+  — 구현 시 동일 라이선스의 JSON 가공본(davidluzgouveia/kanji-data)을 사용해 XML 파싱을 대체
+- **JLPT 급수별 어휘 목록** (elzup/jlpt-word-list 등 공개 정리본): 급수별 단어·읽기·영어 뜻.
+  표기/읽기/뜻이 목록에 포함되어 있어 JMdict 원본 파싱은 생략
 - **IDS 한자 분해 데이터** (CHISE IDS 등): 한자 → 구성요소 분해. 파생 그룹 자동 생성의 근거
 - **Tatoeba** (CC-BY): 일본어 예문 + 한국어/영어 번역. 급수 어휘만 포함된 쉬운 문장 우선 선별
 - **한국 훈음 데이터** (libhangul hanja.txt 등 공개 훈음 DB): "쉴 휴" 형식의 한국식 훈음
