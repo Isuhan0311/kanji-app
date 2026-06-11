@@ -8,7 +8,7 @@ const DAKUTEN: Record<string, string> = {
 };
 const REVERSE = Object.fromEntries(Object.entries(DAKUTEN).map(([a, b]) => [b, a]));
 
-function shuffled<T>(items: T[], rand: () => number): T[] {
+export function shuffled<T>(items: T[], rand: () => number): T[] {
   const a = [...items];
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1));

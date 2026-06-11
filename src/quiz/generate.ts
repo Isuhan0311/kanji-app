@@ -1,7 +1,7 @@
 import type { KanjiEntry, KanjiGroup, SentenceEntry, WordEntry } from '../types';
 import type { KanjiStat } from '../db/progress';
 import { weight, pickWeighted } from '../db/progress';
-import { readingDistractors, kanjiDistractors } from './distractors';
+import { readingDistractors, kanjiDistractors, shuffled } from './distractors';
 
 export type QuestionType = 'word-reading' | 'word-meaning' | 'sentence-reading' | 'sentence-kanji';
 
@@ -85,8 +85,10 @@ export function generateQuiz(opts: Options): Question[] {
     } else if (type === 'word-meaning') {
       const others = words.filter((w) => w.surface !== word.surface && w.meaningKo);
       if (others.length < 3) continue;
-      const distractors = [...new Set(others.map((w) => w.meaningKo))]
-        .filter((m) => m !== word.meaningKo).slice(0, 3);
+      const distractors = shuffled(
+        [...new Set(others.map((w) => w.meaningKo))].filter((m) => m !== word.meaningKo),
+        rand,
+      ).slice(0, 3);
       if (distractors.length < 3) continue;
       const { choices, answerIndex } = insertAnswer(distractors, word.meaningKo, rand);
       out.push({
