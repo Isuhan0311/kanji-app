@@ -1,0 +1,34 @@
+:root {
+  --bg: #ffffff; --surface: #f5f4f0; --text: #1a1a1a; --muted: #6b6b66;
+  --border: #ddd9d0; --accent: #0f6e56; --accent-bg: #e1f5ee;
+  --danger: #a32d2d; --danger-bg: #fcebeb;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #161614; --surface: #232320; --text: #ecebe7; --muted: #9b9a93;
+    --border: #3c3b36; --accent: #5dcaa5; --accent-bg: #0f3d30;
+    --danger: #f09595; --danger-bg: #471616;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font-family: -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', 'Noto Sans JP', sans-serif;
+}
+#root { max-width: 480px; margin: 0 auto; padding: 12px; }
+button {
+  font: inherit; color: inherit; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px;
+}
+button:active { transform: scale(0.98); }
+.kanji-glyph { font-family: 'Hiragino Mincho ProN', 'Yu Mincho', serif; }
+.card {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px; margin-bottom: 10px;
+}
+.badge {
+  font-size: 12px; background: var(--accent-bg); color: var(--accent);
+  border-radius: 8px; padding: 2px 8px;
+}
+.muted { color: var(--muted); font-size: 13px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
