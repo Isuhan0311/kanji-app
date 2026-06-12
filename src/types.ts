@@ -12,6 +12,8 @@ export interface KanjiEntry {
   groupId: string;
   explanation?: string; // 구성 원리 설명 (overrides에서만 옴)
   components?: string[]; // 직접 구성요소 (component-names.json 에 있는 것만)
+  isPart?: true;         // 학습 한자가 아닌 중간 부품
+  componentNote?: string; // 부품 참고 노트 (data/overrides/component-notes.json)
 }
 
 export interface WordEntry {

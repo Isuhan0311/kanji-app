@@ -93,8 +93,10 @@ export default function App() {
 
   const groupMembers = (groupId: string, scope: Scope) => {
     const members = scopeKanji(scope).filter((k) => k.groupId === groupId);
-    if (scope === 'ALL') {
-      members.sort((a, b) => LEVELS.indexOf(a.level) - LEVELS.indexOf(b.level));
+    const group = data.groups.find((g) => g.id === groupId);
+    if (group) {
+      const indexMap = new Map(group.kanji.map((id, i) => [id, i]));
+      members.sort((a, b) => (indexMap.get(a.id) ?? Infinity) - (indexMap.get(b.id) ?? Infinity));
     }
     return members;
   };

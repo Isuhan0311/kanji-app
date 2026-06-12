@@ -1,8 +1,9 @@
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { parseKanjiSource } from './parse-kanji-source';
 import { parseHanjaKo, mergeHunum } from './parse-hanja-ko';
 import { parseIds, expandComponents } from './parse-ids';
 import { buildGroups, applyGroupOverrides, type GroupOverrides } from './groups';
+import { detectParts, orderGroupKanji } from './parts';
 import { parseVocab } from './parse-vocab';
 import { buildSentences } from './parse-tatoeba';
 import { validateBundle } from './validate';
@@ -26,6 +27,10 @@ const built = applyGroupOverrides(
   groupsOv,
 );
 
+const compNotesOv: Record<string, string> = existsSync('data/overrides/component-notes.json')
+  ? json<Record<string, string>>('data/overrides/component-notes.json')
+  : {};
+
 const kanji: KanjiEntry[] = merged.map((k) => {
   const rawComponents = direct.get(k.id) ?? [];
   const components = rawComponents.filter((c) => c in compNamesOv);
@@ -34,6 +39,7 @@ const kanji: KanjiEntry[] = merged.map((k) => {
     groupId: built.assignment.get(k.id)!,
     ...(explainOv[k.id] ? { explanation: explainOv[k.id] } : {}),
     ...(components.length > 0 ? { components } : {}),
+    ...(compNotesOv[k.id] ? { componentNote: compNotesOv[k.id] } : {}),
   };
 });
 const kanjiSet = new Set(kanji.map((k) => k.id));
@@ -45,6 +51,55 @@ for (const target of Object.values(groupsOv.moves)) {
   }
 }
 
+// --- 중간 부품(part) 탐지 및 삽입 ---
+const allComps = expandComponents(direct);
+const kanjiByGroup = new Map<string, KanjiEntry[]>();
+for (const k of kanji) {
+  const list = kanjiByGroup.get(k.groupId) ?? [];
+  list.push(k);
+  kanjiByGroup.set(k.groupId, list);
+}
+const named = new Set(Object.keys(compNamesOv));
+const parts = detectParts(built.groups, kanjiByGroup, direct, allComps, kanjiSet, named);
+
+// 부품 pseudo-KanjiEntry 생성 후 kanji 배열에 추가
+for (const part of parts) {
+  const partComponents = (direct.get(part.id) ?? []).filter((c) => c in compNamesOv);
+  const entry: KanjiEntry = {
+    id: part.id,
+    hunum: compNamesOv[part.id] ?? part.id,
+    onyomi: [],
+    kunyomi: [],
+    strokes: 0,
+    level: part.level,
+    groupId: part.groupId,
+    isPart: true,
+    explanation: `단독으로는 잘 쓰이지 않는 부품자예요. ${part.derived.join('·')}을(를) 만드는 조각으로 기억하세요.`,
+    ...(partComponents.length > 0 ? { components: partComponents } : {}),
+    ...(compNotesOv[part.id] ? { componentNote: compNotesOv[part.id] } : {}),
+  };
+  kanji.push(entry);
+}
+
+// 그룹의 kanji 배열을 orderGroupKanji로 재정렬 (부품 포함)
+const kanjiByGroupUpdated = new Map<string, KanjiEntry[]>();
+for (const k of kanji) {
+  const list = kanjiByGroupUpdated.get(k.groupId) ?? [];
+  list.push(k);
+  kanjiByGroupUpdated.set(k.groupId, list);
+}
+for (const group of built.groups) {
+  const members = kanjiByGroupUpdated.get(group.id) ?? [];
+  group.kanji = orderGroupKanji(group, members, parts);
+}
+
+console.log(`부품 ${parts.length}개 추가`);
+if (parts.length > 0) {
+  const examples = parts.slice(0, 10).map((p) => `${p.id}(${p.groupId}그룹, derived:${p.derived.join('·')})`);
+  console.log(`  예시: ${examples.join(' / ')}`);
+}
+
+// --- 이하 기존 ---
 mkdirSync('public/data', { recursive: true });
 writeFileSync(
   'public/data/components.json',

@@ -20,8 +20,13 @@ export default function StudyCard({ kanji, group, words, index, total, component
   return (
     <div>
       <div className="row" style={{ justifyContent: 'space-between' }}>
-        <span className="badge">{group.name} {index + 1}/{total}</span>
-        <span className="muted">{kanji.level} · {kanji.strokes}획</span>
+        <div className="row" style={{ gap: 4 }}>
+          <span className="badge">{group.name} {index + 1}/{total}</span>
+          {kanji.isPart && <span className="badge">부품</span>}
+        </div>
+        <span className="muted">
+          {kanji.isPart ? kanji.level : `${kanji.level} · ${kanji.strokes}획`}
+        </span>
       </div>
       <div className="card">
         <div className="row">
@@ -35,6 +40,9 @@ export default function StudyCard({ kanji, group, words, index, total, component
           <div className="muted" style={{ fontSize: 14, marginTop: 6 }}>
             구성: {kanji.components.map((c) => `${c}(${componentNames[c] ?? '?'})`).join(' + ')}
           </div>
+        )}
+        {kanji.componentNote && (
+          <div className="muted">💡 {kanji.componentNote}</div>
         )}
         {kanji.onyomi.length > 0 && (
           <div style={{ borderTop: '1px solid var(--border)', marginTop: 10, paddingTop: 10 }}>

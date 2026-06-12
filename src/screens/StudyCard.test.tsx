@@ -44,3 +44,38 @@ test('학습 완료 버튼이 onLearned를 호출한다', () => {
   fireEvent.click(screen.getByRole('button', { name: /학습 완료/ }));
   expect(spy).toHaveBeenCalledWith('休');
 });
+
+const partKanji: Parameters<typeof StudyCard>[0]['kanji'] = {
+  id: '畐',
+  hunum: '가득할 복',
+  onyomi: [],
+  kunyomi: [],
+  strokes: 0,
+  level: 'N3',
+  groupId: '田',
+  isPart: true,
+  explanation: '단독으로는 잘 쓰이지 않는 부품자예요. 福·富을(를) 만드는 조각으로 기억하세요.',
+};
+
+const partGroup: Parameters<typeof StudyCard>[0]['group'] = {
+  id: '田',
+  base: '田',
+  name: '田의 파생',
+  kanji: ['田', '男', '畐', '福', '富'],
+};
+
+test('isPart=true이면 "부품" 배지가 보이고 획수 표시가 없다', () => {
+  render(
+    <StudyCard kanji={partKanji} group={partGroup} words={[]}
+      index={2} total={5} componentNames={FIX_COMP_NAMES}
+      onPrev={noop} onNext={noop} onJump={noop} onLearned={noop} />,
+  );
+  expect(screen.getByText('부품')).toBeTruthy();
+  expect(screen.queryByText(/0획/)).toBeNull();
+});
+
+test('componentNote가 있으면 노트가 보인다', () => {
+  const kanjiWithNote = { ...kyuu, componentNote: '테스트 노트' };
+  renderCard({ kanji: kanjiWithNote });
+  expect(screen.getByText(/테스트 노트/)).toBeTruthy();
+});
