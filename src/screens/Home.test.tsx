@@ -1,12 +1,12 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, test, expect, vi } from 'vitest';
 import Home from './Home';
-import type { KanjiEntry, KanjiGroup } from '../types';
+import type { KanjiEntry, KanjiGroup, Scope } from '../types';
 import { FIX_GROUPS, FIX_KANJI } from '../test/fixtures';
 
 const noop = () => {};
 
-function renderHome(onOpenGroup = noop as (g: string, l: string) => void) {
+function renderHome(onOpenGroup = noop as (g: string, s: Scope) => void) {
   return render(
     <Home groups={FIX_GROUPS} kanji={FIX_KANJI} learned={new Set(['休'])}
       onOpenGroup={onOpenGroup} onReview={noop} onQuiz={noop} onWrongNotes={noop} />,
@@ -83,5 +83,20 @@ describe('Home', () => {
     expect(screen.getByText('頁의 파생')).toBeTruthy();
     // 페이지네이션 없음 (N3은 1그룹이라 totalPages=1)
     expect(screen.queryByText('이전')).toBeNull();
+  });
+
+  test('전체 탭을 누르면 모든 급수 그룹이 함께 보이고 onOpenGroup이 ALL로 호출된다', () => {
+    const spy = vi.fn();
+    renderHome(spy);
+    // 전체 탭 클릭
+    fireEvent.click(screen.getByRole('button', { name: '전체' }));
+    // N5의 木의 파생과 N3의 頁의 파생이 동시에 보여야 한다
+    expect(screen.getByText('木의 파생')).toBeTruthy();
+    expect(screen.getByText('頁의 파생')).toBeTruthy();
+    // 木 그룹 진도 확인: learned={'休'}, 木그룹 3자 중 1자 학습
+    expect(screen.getByText('1/3 학습 완료')).toBeTruthy();
+    // 그룹 클릭 시 scope='ALL'로 호출
+    fireEvent.click(screen.getByText('木의 파생'));
+    expect(spy).toHaveBeenCalledWith('木', 'ALL');
   });
 });

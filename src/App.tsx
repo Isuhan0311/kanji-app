@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from 'react';
-import type { KanjiGroup, Level, LevelBundle } from './types';
+import type { KanjiGroup, Level, LevelBundle, Scope } from './types';
 import { LEVELS } from './types';
 import { loadGroups, loadLevel, loadComponentNames } from './data/loadData';
 import { getStats, recordAnswer, markLearned, weight, type KanjiStat } from './db/progress';
@@ -13,10 +13,10 @@ import WrongNotes from './screens/WrongNotes';
 
 type Route =
   | { name: 'home' }
-  | { name: 'study'; groupId: string; level: Level; index: number }
+  | { name: 'study'; groupId: string; scope: Scope; index: number }
   | { name: 'review'; ids: string[] }
-  | { name: 'quiz'; level: Level; questions: Question[] }
-  | { name: 'result'; level: Level; results: QuizOutcome[] }
+  | { name: 'quiz'; scope: Scope; questions: Question[] }
+  | { name: 'result'; scope: Scope; results: QuizOutcome[] }
   | { name: 'wrong' };
 
 interface Data {
@@ -74,15 +74,37 @@ export default function App() {
   const record = (id: string, correct: boolean) =>
     recordAnswer(id, correct).then(refreshStats).catch(() => setStorageOk(false));
 
-  const groupMembers = (groupId: string, level: Level) =>
-    data.bundles[level].kanji.filter((k) => k.groupId === groupId);
+  const scopeKanji = (scope: Scope) =>
+    scope === 'ALL' ? allKanji : data.bundles[scope].kanji;
+
+  const scopeWords = (scope: Scope) =>
+    scope === 'ALL'
+      ? LEVELS.flatMap((l) => data.bundles[l].words)
+      : data.bundles[scope].words;
+
+  const scopeBundle = (scope: Scope) =>
+    scope === 'ALL'
+      ? {
+          words: LEVELS.flatMap((l) => data.bundles[l].words),
+          sentences: LEVELS.flatMap((l) => data.bundles[l].sentences),
+          kanji: allKanji,
+        }
+      : data.bundles[scope];
+
+  const groupMembers = (groupId: string, scope: Scope) => {
+    const members = scopeKanji(scope).filter((k) => k.groupId === groupId);
+    if (scope === 'ALL') {
+      members.sort((a, b) => LEVELS.indexOf(a.level) - LEVELS.indexOf(b.level));
+    }
+    return members;
+  };
 
   const goStudy = (kanjiId: string) => {
     const k = kanjiById.get(kanjiId);
     if (!k) return;
     const members = groupMembers(k.groupId, k.level);
     setRoute({
-      name: 'study', groupId: k.groupId, level: k.level,
+      name: 'study', groupId: k.groupId, scope: k.level,
       index: Math.max(0, members.findIndex((m) => m.id === kanjiId)),
     });
   };
@@ -94,13 +116,13 @@ export default function App() {
     setRoute({ name: 'review', ids: sorted.slice(0, 20) });
   };
 
-  const startQuiz = (level: Level) => {
-    const b = data.bundles[level];
+  const startQuiz = (scope: Scope) => {
+    const b = scopeBundle(scope);
     const questions = generateQuiz({
       words: b.words, sentences: b.sentences, kanji: b.kanji,
       groups: data.groups, stats, count: 10,
     });
-    setRoute({ name: 'quiz', level, questions });
+    setRoute({ name: 'quiz', scope, questions });
   };
 
   let screen: ReactNode;
@@ -108,14 +130,14 @@ export default function App() {
     case 'home':
       screen = (
         <Home groups={data.groups} kanji={allKanji} learned={learned}
-          onOpenGroup={(groupId, level) => setRoute({ name: 'study', groupId, level, index: 0 })}
-          onReview={(level) => startReview(data.bundles[level].kanji.map((k) => k.id))}
+          onOpenGroup={(groupId, scope) => setRoute({ name: 'study', groupId, scope, index: 0 })}
+          onReview={(scope) => startReview(scopeKanji(scope).map((k) => k.id))}
           onQuiz={startQuiz}
           onWrongNotes={() => setRoute({ name: 'wrong' })} />
       );
       break;
     case 'study': {
-      const members = groupMembers(route.groupId, route.level);
+      const members = groupMembers(route.groupId, route.scope);
       const k = members[route.index];
       const group = data.groups.find((g) => g.id === route.groupId)!;
       if (!k || !group) {
@@ -123,7 +145,7 @@ export default function App() {
         break;
       }
       screen = (
-        <StudyCard kanji={k} group={group} words={data.bundles[route.level].words}
+        <StudyCard kanji={k} group={group} words={scopeWords(route.scope)}
           index={route.index} total={members.length}
           componentNames={data.componentNames}
           onPrev={() =>
@@ -156,13 +178,13 @@ export default function App() {
       screen = (
         <Quiz questions={route.questions}
           onAnswer={(q, correct) => q.kanjiIds.forEach((id) => void record(id, correct))}
-          onFinish={(results) => setRoute({ name: 'result', level: route.level, results })} />
+          onFinish={(results) => setRoute({ name: 'result', scope: route.scope, results })} />
       );
       break;
     case 'result':
       screen = (
         <QuizResult results={route.results}
-          onRetry={() => startQuiz(route.level)}
+          onRetry={() => startQuiz(route.scope)}
           onHome={() => setRoute({ name: 'home' })}
           onJumpKanji={goStudy} />
       );

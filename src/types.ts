@@ -1,5 +1,6 @@
 export type Level = 'N5' | 'N4' | 'N3' | 'N2';
 export const LEVELS: Level[] = ['N5', 'N4', 'N3', 'N2'];
+export type Scope = Level | 'ALL';
 
 export interface KanjiEntry {
   id: string;          // 한자 1글자 (예: "休")
