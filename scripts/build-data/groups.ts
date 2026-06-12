@@ -85,13 +85,14 @@ export function applyGroupOverrides(
  * 크기가 maxSize 이하인 비-misc 파생 그룹을, 기본자의 구성요소 중
  * 다른 그룹의 기본자인 한자를 상위 그룹으로 삼아 병합한다.
  *
- * @param built      applyGroupOverrides 결과
- * @param kanjiById  한자 id → KanjiWithHunum (획수 참조용)
- * @param direct     직접 구성요소 맵
- * @param all        재귀 구성요소 맵
- * @param maxSize    이 크기 이하(기본자 포함)인 그룹을 병합 후보로 삼음
- * @returns          병합된 BuiltGroups와 subs 맵
- *                   subs: 상위 그룹 id → 병합된 소그룹 목록(순서대로)
+ * @param built          applyGroupOverrides 결과
+ * @param kanjiById      한자 id → KanjiWithHunum (획수 참조용)
+ * @param direct         직접 구성요소 맵
+ * @param all            재귀 구성요소 맵
+ * @param maxSize        이 크기 이하(기본자 포함)인 그룹을 병합 후보로 삼음
+ * @param forcedParents  기본자 → 상위 기본자 강제 지정 (크기 무관 병합)
+ * @returns              병합된 BuiltGroups와 subs 맵
+ *                       subs: 상위 그룹 id → 병합된 소그룹 목록(순서대로)
  */
 export function mergeSmallGroups(
   built: BuiltGroups,
@@ -99,14 +100,27 @@ export function mergeSmallGroups(
   direct: Map<string, string[]>,
   all: Map<string, Set<string>>,
   maxSize: number,
-): { built: BuiltGroups; subs: Map<string, MergedSub[]> } {
+  forcedParents: Record<string, string> = {},
+): { built: BuiltGroups; subs: Map<string, MergedSub[]>; forcedCount: number; singletonCount: number } {
   // 현재 그룹들의 id 집합 (기본자 집합)
   const groupIds = new Set(built.groups.filter((g) => !g.id.startsWith('misc-')).map((g) => g.id));
 
   // 후보: non-misc 그룹 중 kanji.length <= maxSize
-  const candidates = built.groups.filter(
+  const sizeCandidates = built.groups.filter(
     (g) => !g.id.startsWith('misc-') && g.kanji.length <= maxSize,
   );
+
+  // forcedParents에 있는 그룹들도 후보에 포함 (크기 무관)
+  const forcedBaseIds = new Set(Object.keys(forcedParents));
+  const forcedCandidates = built.groups.filter(
+    (g) => !g.id.startsWith('misc-') && forcedBaseIds.has(g.id),
+  );
+
+  // 합집합 (중복 제거): forced 먼저, 그 다음 size-based
+  const candidateMap = new Map<string, typeof sizeCandidates[0]>();
+  for (const g of forcedCandidates) candidateMap.set(g.id, g);
+  for (const g of sizeCandidates) candidateMap.set(g.id, g);
+  const candidates = [...candidateMap.values()];
 
   // 각 후보 그룹의 기본자 b에 대해, b의 직접/재귀 구성요소 중
   // 다른 그룹의 기본자인 것을 찾아 상위 그룹으로 결정한다 (max strokes 우선)
@@ -129,10 +143,24 @@ export function mergeSmallGroups(
     )[0];
   }
 
-  // 각 후보의 직접 parent (없으면 undefined)
+  // 각 후보의 직접 parent (없으면 undefined); forced 항목은 forcedParents 우선 사용
   const directParent = new Map<string, string | undefined>();
   for (const g of candidates) {
-    directParent.set(g.id, findParent(g.id));
+    if (forcedBaseIds.has(g.id)) {
+      const fp = forcedParents[g.id];
+      // 부모 한자가 kanjiById에 있고 그룹도 있어야 함
+      if (!kanjiById.has(fp)) {
+        console.warn(`[group-parents] 경고: "${g.id}"의 강제 부모 "${fp}"가 한자 집합에 없음 — 건너뜀`);
+        directParent.set(g.id, findParent(g.id));
+      } else if (!groupIds.has(fp)) {
+        console.warn(`[group-parents] 경고: "${g.id}"의 강제 부모 "${fp}"에 대한 그룹이 없음 — 건너뜀`);
+        directParent.set(g.id, findParent(g.id));
+      } else {
+        directParent.set(g.id, fp);
+      }
+    } else {
+      directParent.set(g.id, findParent(g.id));
+    }
   }
 
   // union-find 스타일로 최종 parent 해소 (체인 팔로우, 사이클 방지)
@@ -148,14 +176,21 @@ export function mergeSmallGroups(
     return p;
   }
 
-  // 크기 오름차순으로 처리 (작은 그룹 먼저)
-  const sorted = [...candidates].sort((a, b) => a.kanji.length - b.kanji.length);
+  // forced 항목 먼저, 그 다음 크기 오름차순으로 처리 (작은 그룹 먼저)
+  const forcedOnly = candidates.filter((g) => forcedBaseIds.has(g.id));
+  const sizeOnly = candidates.filter((g) => !forcedBaseIds.has(g.id));
+  const sorted = [
+    ...forcedOnly.sort((a, b) => a.kanji.length - b.kanji.length),
+    ...sizeOnly.sort((a, b) => a.kanji.length - b.kanji.length),
+  ];
 
   // assignment 복사 후 병합 적용
   const assignment = new Map(built.assignment);
 
   // subs: parentId → MergedSub[]
   const rawSubs = new Map<string, MergedSub[]>();
+
+  let forcedCount = 0;
 
   for (const g of sorted) {
     const parent = resolveParent(g.id);
@@ -174,6 +209,27 @@ export function mergeSmallGroups(
 
     // groupIds에서 g를 제거해야 이후 체인 해소가 올바르게 동작
     groupIds.delete(g.id);
+
+    if (forcedBaseIds.has(g.id)) forcedCount++;
+  }
+
+  // --- 싱글턴 정리: 병합 후 남은 non-misc 그룹 중 멤버가 기본자 1개뿐인 그룹 해산 ---
+  let singletonCount = 0;
+  // 현재 assignment 기준으로 각 그룹 id별 멤버 수를 계산
+  const memberCount = new Map<string, number>();
+  for (const gId of assignment.values()) {
+    memberCount.set(gId, (memberCount.get(gId) ?? 0) + 1);
+  }
+
+  for (const [gId, count] of memberCount) {
+    if (gId.startsWith('misc-')) continue;
+    if (count !== 1) continue;
+    // gId 자체가 유일한 멤버인 경우만 해산 (기본자 하나뿐)
+    const level = kanjiById.get(gId)?.level;
+    if (!level) continue;
+    const miscId = `misc-${level}`;
+    assignment.set(gId, miscId);
+    singletonCount++;
   }
 
   // groups 재구성
@@ -189,5 +245,7 @@ export function mergeSmallGroups(
   return {
     built: { groups: newGroups, assignment },
     subs: rawSubs,
+    forcedCount,
+    singletonCount,
   };
 }

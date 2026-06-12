@@ -17,6 +17,7 @@ const wordsKoOv = json<Record<string, string>>('data/overrides/words-ko.json');
 const groupsOv = json<GroupOverrides>('data/overrides/groups.json');
 const explainOv = json<Record<string, string>>('data/overrides/explanations.json');
 const compNamesOv = json<Record<string, string>>('data/overrides/component-names.json');
+const groupParentsOv = json<Record<string, string>>('data/overrides/group-parents.json');
 
 const parsed = parseKanjiSource(raw('kanji-jouyou.json'));
 const { merged, missing } = mergeHunum(parsed, parseHanjaKo(raw('hanja.txt')), kanjiKoOv);
@@ -31,17 +32,19 @@ const builtRaw = applyGroupOverrides(
 );
 
 const groupCountBefore = builtRaw.groups.length;
-const { built: builtMerged, subs } = mergeSmallGroups(
+const { built: builtMerged, subs, forcedCount, singletonCount } = mergeSmallGroups(
   builtRaw,
   kanjiById,
   direct,
   allCompsForGroups,
   4, // maxSize: 이 크기 이하 그룹을 상위 그룹으로 병합
+  groupParentsOv,
 );
 const built = builtMerged;
 const groupCountAfter = built.groups.length;
 
 console.log(`소그룹 병합: ${groupCountBefore}개 그룹 → ${groupCountAfter}개 그룹`);
+console.log(`강제 병합 ${forcedCount}건, 단독 그룹 정리 ${singletonCount}건`);
 // 예시 5개 출력
 let exampleCount = 0;
 for (const [parentId, subList] of subs) {
