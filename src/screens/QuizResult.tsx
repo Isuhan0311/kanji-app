@@ -17,6 +17,7 @@ export default function QuizResult({ results, onRetry, onHome, onJumpKanji }: Pr
       {wrong.map((r, i) => (
         <div key={i} className="card">
           <div>{r.question.explanation}</div>
+          {r.question.breakdown && <div className="muted">{r.question.breakdown}</div>}
           <div className="row" style={{ marginTop: 8 }}>
             {r.question.kanjiIds.map((id) => (
               <button key={id} className="kanji-glyph" onClick={() => onJumpKanji(id)}>{id} 카드 보기</button>

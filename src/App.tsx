@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import type { KanjiGroup, Level, LevelBundle } from './types';
 import { LEVELS } from './types';
-import { loadGroups, loadLevel } from './data/loadData';
+import { loadGroups, loadLevel, loadComponentNames } from './data/loadData';
 import { getStats, recordAnswer, markLearned, weight, type KanjiStat } from './db/progress';
 import { generateQuiz, type Question } from './quiz/generate';
 import Home from './screens/Home';
@@ -22,6 +22,7 @@ type Route =
 interface Data {
   groups: KanjiGroup[];
   bundles: Record<Level, LevelBundle>;
+  componentNames: Record<string, string>;
 }
 
 export default function App() {
@@ -37,14 +38,15 @@ export default function App() {
   useEffect(() => {
     (async () => {
       try {
-        const [groups, ...rest] = await Promise.all([
+        const [groups, componentNames, ...rest] = await Promise.all([
           loadGroups(),
+          loadComponentNames(),
           ...LEVELS.map((l) => loadLevel(l)),
         ]);
         const bundles = Object.fromEntries(
           LEVELS.map((l, i) => [l, rest[i]]),
         ) as Record<Level, LevelBundle>;
-        setData({ groups, bundles });
+        setData({ groups, bundles, componentNames });
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
       }
@@ -123,6 +125,7 @@ export default function App() {
       screen = (
         <StudyCard kanji={k} group={group} words={data.bundles[route.level].words}
           index={route.index} total={members.length}
+          componentNames={data.componentNames}
           onPrev={() =>
             route.index > 0
               ? setRoute({ ...route, index: route.index - 1 })

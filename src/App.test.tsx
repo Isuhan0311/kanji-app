@@ -8,10 +8,12 @@ beforeEach(() => {
   clearCache();
   vi.stubGlobal('fetch', vi.fn(async (url: string) => ({
     ok: true,
-    json: async () =>
-      String(url).includes('groups')
-        ? FIX_GROUPS
-        : { kanji: FIX_KANJI, words: [], sentences: [] },
+    json: async () => {
+      const u = String(url);
+      if (u.includes('groups')) return FIX_GROUPS;
+      if (u.includes('components')) return {};
+      return { kanji: FIX_KANJI, words: [], sentences: [] };
+    },
   })));
 });
 

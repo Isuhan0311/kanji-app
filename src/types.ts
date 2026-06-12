@@ -10,6 +10,7 @@ export interface KanjiEntry {
   level: Level;
   groupId: string;
   explanation?: string; // 구성 원리 설명 (overrides에서만 옴)
+  components?: string[]; // 직접 구성요소 (component-names.json 에 있는 것만)
 }
 
 export interface WordEntry {

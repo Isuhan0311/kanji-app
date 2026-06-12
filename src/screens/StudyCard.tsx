@@ -6,13 +6,14 @@ interface Props {
   words: WordEntry[];
   index: number;  // 0-based
   total: number;
+  componentNames: Record<string, string>;
   onPrev: () => void;
   onNext: () => void;
   onJump: (kanjiId: string) => void;
   onLearned: (kanjiId: string) => void;
 }
 
-export default function StudyCard({ kanji, group, words, index, total, onPrev, onNext, onJump, onLearned }: Props) {
+export default function StudyCard({ kanji, group, words, index, total, componentNames, onPrev, onNext, onJump, onLearned }: Props) {
   const examples = words.filter((w) => w.kanji.includes(kanji.id)).slice(0, 4);
   const siblings = group.kanji.filter((id) => id !== kanji.id);
 
@@ -30,6 +31,11 @@ export default function StudyCard({ kanji, group, words, index, total, onPrev, o
             {kanji.explanation && <div className="muted">{kanji.explanation}</div>}
           </div>
         </div>
+        {kanji.components && kanji.components.length > 0 && (
+          <div className="muted" style={{ fontSize: 14, marginTop: 6 }}>
+            구성: {kanji.components.map((c) => `${c}(${componentNames[c] ?? '?'})`).join(' + ')}
+          </div>
+        )}
         {kanji.onyomi.length > 0 && (
           <div style={{ borderTop: '1px solid var(--border)', marginTop: 10, paddingTop: 10 }}>
             <span className="badge">음독</span>

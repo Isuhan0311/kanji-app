@@ -14,6 +14,7 @@ export interface Question {
   answerIndex: number;
   kanjiIds: string[];      // 진도 기록 대상
   explanation: string;
+  breakdown: string;       // e.g. "休(쉴 휴) + 日(날 일)"
 }
 
 interface Options {
@@ -38,6 +39,13 @@ export function generateQuiz(opts: Options): Question[] {
   const rand = opts.rand ?? Math.random;
   const explain = (w: WordEntry) =>
     `${w.surface}(${w.reading}) — ${w.meaningKo || w.meaningEn}`;
+  const buildBreakdown = (w: WordEntry) => {
+    const kanjiMap = new Map(kanji.map((k) => [k.id, k]));
+    return w.kanji
+      .map((id) => { const k = kanjiMap.get(id); return k ? `${id}(${k.hunum})` : null; })
+      .filter((s): s is string => s !== null)
+      .join(' + ');
+  };
   const wordWeight = (w: WordEntry) =>
     Math.max(...w.kanji.map((id) => weight(stats.get(id))));
   const sentenceByWord = new Map<string, SentenceEntry[]>();
@@ -81,6 +89,7 @@ export function generateQuiz(opts: Options): Question[] {
         underlined: word.surface,
         kanjiIds: word.kanji,
         explanation: explain(word),
+        breakdown: buildBreakdown(word),
       });
     } else if (type === 'word-meaning') {
       const others = words.filter((w) => w.surface !== word.surface && w.meaningKo);
@@ -97,6 +106,7 @@ export function generateQuiz(opts: Options): Question[] {
         underlined: word.surface,
         kanjiIds: word.kanji,
         explanation: explain(word),
+        breakdown: buildBreakdown(word),
       });
     } else {
       // sentence-kanji
@@ -111,6 +121,7 @@ export function generateQuiz(opts: Options): Question[] {
         underlined: word.reading,
         kanjiIds: word.kanji,
         explanation: explain(word),
+        breakdown: buildBreakdown(word),
       });
     }
   }

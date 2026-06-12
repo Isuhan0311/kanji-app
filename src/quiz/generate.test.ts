@@ -17,6 +17,9 @@ test('요청 개수만큼 문제를 만들고 보기는 4개, 정답 위치가 �
     expect(new Set(q.choices).size).toBe(4);
     expect(q.choices[q.answerIndex]).toBeTruthy();
     expect(q.kanjiIds.length).toBeGreaterThan(0);
+    // breakdown should contain a hunum pattern and the first kanjiId (when found in FIX_KANJI)
+    expect(q.breakdown).toMatch(/\(.+\)/);
+    expect(q.breakdown).toContain(q.kanjiIds[0]);
   }
 });
 

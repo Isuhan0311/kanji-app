@@ -3,9 +3,11 @@ import type { KanjiEntry, KanjiGroup, SentenceEntry, WordEntry } from '../types'
 export const FIX_KANJI: KanjiEntry[] = [
   { id: '木', hunum: '나무 목', onyomi: ['もく', 'ぼく'], kunyomi: ['き'], strokes: 4, level: 'N5', groupId: '木' },
   { id: '休', hunum: '쉴 휴', onyomi: ['きゅう'], kunyomi: ['やす(む)'], strokes: 6, level: 'N5', groupId: '木',
-    explanation: '사람(亻)이 나무(木)에 기대어 쉬는 모습' },
-  { id: '林', hunum: '수풀 림', onyomi: ['りん'], kunyomi: ['はやし'], strokes: 8, level: 'N5', groupId: '木' },
-  { id: '頂', hunum: '정수리 정', onyomi: ['ちょう'], kunyomi: ['いただ(く)'], strokes: 11, level: 'N3', groupId: '頁' },
+    explanation: '사람(亻)이 나무(木)에 기대어 쉬는 모습', components: ['亻', '木'] },
+  { id: '林', hunum: '수풀 림', onyomi: ['りん'], kunyomi: ['はやし'], strokes: 8, level: 'N5', groupId: '木',
+    components: ['木'] },
+  { id: '頂', hunum: '정수리 정', onyomi: ['ちょう'], kunyomi: ['いただ(く)'], strokes: 11, level: 'N3', groupId: '頁',
+    components: ['丁', '頁'] },
   { id: '順', hunum: '순할 순', onyomi: ['じゅん'], kunyomi: [], strokes: 12, level: 'N3', groupId: '頁' },
   { id: '頁', hunum: '머리 혈', onyomi: ['けつ'], kunyomi: [], strokes: 9, level: 'N3', groupId: '頁' },
 ];

@@ -15,6 +15,7 @@ const kanjiKoOv = json<Record<string, string>>('data/overrides/kanji-ko.json');
 const wordsKoOv = json<Record<string, string>>('data/overrides/words-ko.json');
 const groupsOv = json<GroupOverrides>('data/overrides/groups.json');
 const explainOv = json<Record<string, string>>('data/overrides/explanations.json');
+const compNamesOv = json<Record<string, string>>('data/overrides/component-names.json');
 
 const parsed = parseKanjiSource(raw('kanji-jouyou.json'));
 const { merged, missing } = mergeHunum(parsed, parseHanjaKo(raw('hanja.txt')), kanjiKoOv);
@@ -25,11 +26,16 @@ const built = applyGroupOverrides(
   groupsOv,
 );
 
-const kanji: KanjiEntry[] = merged.map((k) => ({
-  ...k,
-  groupId: built.assignment.get(k.id)!,
-  ...(explainOv[k.id] ? { explanation: explainOv[k.id] } : {}),
-}));
+const kanji: KanjiEntry[] = merged.map((k) => {
+  const rawComponents = direct.get(k.id) ?? [];
+  const components = rawComponents.filter((c) => c in compNamesOv);
+  return {
+    ...k,
+    groupId: built.assignment.get(k.id)!,
+    ...(explainOv[k.id] ? { explanation: explainOv[k.id] } : {}),
+    ...(components.length > 0 ? { components } : {}),
+  };
+});
 const kanjiSet = new Set(kanji.map((k) => k.id));
 
 // 오버라이드 이동 대상이 실제 한자가 아닌 경우 경고 (유령 그룹 방지)
@@ -40,6 +46,10 @@ for (const target of Object.values(groupsOv.moves)) {
 }
 
 mkdirSync('public/data', { recursive: true });
+writeFileSync(
+  'public/data/components.json',
+  readFileSync('data/overrides/component-names.json', 'utf8'),
+);
 
 // Tatoeba 파일을 한 번만 읽어 4개 레벨에서 재사용
 const jpnTsv = raw('jpn_sentences.tsv');

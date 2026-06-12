@@ -77,6 +77,7 @@ export default function Quiz({ questions, onAnswer, onFinish }: Props) {
               {selected === q.answerIndex ? '정답!' : '오답…'}
             </div>
             <div className="muted">{q.explanation}</div>
+            {q.breakdown && <div className="muted">{q.breakdown}</div>}
             <button onClick={next} style={{ marginTop: 10, width: '100%' }}>
               {isLast ? '결과 보기' : '다음'}
             </button>

@@ -6,10 +6,13 @@ import { FIX_GROUPS, FIX_KANJI, FIX_WORDS } from '../test/fixtures';
 const kyuu = FIX_KANJI.find((k) => k.id === '休')!;
 const noop = () => {};
 
+const FIX_COMP_NAMES: Record<string, string> = { '亻': '사람인변', '木': '나무 목' };
+
 function renderCard(over: Partial<Parameters<typeof StudyCard>[0]> = {}) {
   return render(
     <StudyCard kanji={kyuu} group={FIX_GROUPS[0]} words={FIX_WORDS}
-      index={1} total={3} onPrev={noop} onNext={noop} onJump={noop} onLearned={noop} {...over} />,
+      index={1} total={3} componentNames={FIX_COMP_NAMES}
+      onPrev={noop} onNext={noop} onJump={noop} onLearned={noop} {...over} />,
   );
 }
 
@@ -21,6 +24,11 @@ test('훈음·읽기·예시 단어·설명을 보여준다', () => {
   expect(screen.getByText(/休日/)).toBeTruthy();
   expect(screen.getByText(/사람\(亻\)이 나무/)).toBeTruthy();
   expect(screen.getByText('木의 파생 2/3')).toBeTruthy();
+});
+
+test('구성요소 이름을 보여준다', () => {
+  renderCard();
+  expect(screen.getByText(/亻\(사람인변\) \+ 木\(나무 목\)/)).toBeTruthy();
 });
 
 test('같은 그룹의 다른 한자를 누르면 onJump가 호출된다', () => {
