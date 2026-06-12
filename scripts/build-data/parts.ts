@@ -1,4 +1,5 @@
 import { LEVELS, type KanjiEntry, type KanjiGroup, type Level } from '../../src/types';
+import type { MergedSub } from './groups';
 
 export interface PartInfo {
   id: string;
@@ -66,15 +67,26 @@ export function detectParts(
 /**
  * 그룹의 한자 배열을 재정렬한다:
  * 1. base가 멤버이면 맨 앞
- * 2. 어떤 part의 derived도 아닌 멤버 (현재 순서 유지)
- * 3. 각 part마다: part.id, 그 derived 멤버들 (먼저 나온 part에서 처리된 멤버는 건너뜀)
+ * 2. 어떤 part/sub의 derived도 아닌 멤버 (현재 순서 유지)
+ * 3. 각 merged sub마다: subBase, 그 sub members
+ * 4. 각 part마다: part.id, 그 derived 멤버들 (먼저 나온 part에서 처리된 멤버는 건너뜀)
+ *
+ * @param subs  mergeSmallGroups에서 반환한 이 그룹의 MergedSub 목록 (없으면 빈 배열)
  */
 export function orderGroupKanji(
   group: KanjiGroup,
   members: KanjiEntry[],
   parts: PartInfo[],
+  subs: MergedSub[] = [],
 ): string[] {
   const groupParts = parts.filter((p) => p.groupId === group.id);
+
+  // sub에 속하는 멤버 ID 집합 (subBase 포함)
+  const allSubMembers = new Set<string>();
+  for (const sub of subs) {
+    allSubMembers.add(sub.baseId);
+    for (const m of sub.members) allSubMembers.add(m);
+  }
 
   // 어떤 part의 derived인 멤버 ID 집합 (first-come 처리)
   const derivedByPart = new Map<string, string[]>(); // part.id → derived member ids in order
@@ -83,7 +95,7 @@ export function orderGroupKanji(
   for (const part of groupParts) {
     const ordered: string[] = [];
     for (const id of part.derived) {
-      if (!allDerived.has(id)) {
+      if (!allDerived.has(id) && !allSubMembers.has(id)) {
         ordered.push(id);
         allDerived.add(id);
       }
@@ -106,14 +118,20 @@ export function orderGroupKanji(
     addId(group.base);
   }
 
-  // 2. non-derived members (in original order)
+  // 2. non-derived, non-sub members (in original order)
   for (const m of members) {
-    if (!allDerived.has(m.id)) {
+    if (!allDerived.has(m.id) && !allSubMembers.has(m.id)) {
       addId(m.id);
     }
   }
 
-  // 3. each part then its derived members
+  // 3. each merged sub: subBase then sub members
+  for (const sub of subs) {
+    addId(sub.baseId);
+    for (const id of sub.members) addId(id);
+  }
+
+  // 4. each part then its derived members
   for (const part of groupParts) {
     addId(part.id);
     for (const id of derivedByPart.get(part.id) ?? []) {

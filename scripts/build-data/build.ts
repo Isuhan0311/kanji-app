@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { parseKanjiSource } from './parse-kanji-source';
 import { parseHanjaKo, mergeHunum } from './parse-hanja-ko';
 import { parseIds, expandComponents } from './parse-ids';
-import { buildGroups, applyGroupOverrides, type GroupOverrides } from './groups';
+import { buildGroups, applyGroupOverrides, mergeSmallGroups, type GroupOverrides } from './groups';
 import { detectParts, orderGroupKanji } from './parts';
 import { parseVocab } from './parse-vocab';
 import { buildSentences } from './parse-tatoeba';
@@ -22,10 +22,36 @@ const parsed = parseKanjiSource(raw('kanji-jouyou.json'));
 const { merged, missing } = mergeHunum(parsed, parseHanjaKo(raw('hanja.txt')), kanjiKoOv);
 
 const direct = parseIds(raw('ids.txt'));
-const built = applyGroupOverrides(
-  buildGroups(merged, direct, expandComponents(direct)),
+const allCompsForGroups = expandComponents(direct);
+const kanjiById = new Map(merged.map((k) => [k.id, k]));
+
+const builtRaw = applyGroupOverrides(
+  buildGroups(merged, direct, allCompsForGroups),
   groupsOv,
 );
+
+const groupCountBefore = builtRaw.groups.length;
+const { built: builtMerged, subs } = mergeSmallGroups(
+  builtRaw,
+  kanjiById,
+  direct,
+  allCompsForGroups,
+  4, // maxSize: 이 크기 이하 그룹을 상위 그룹으로 병합
+);
+const built = builtMerged;
+const groupCountAfter = built.groups.length;
+
+console.log(`소그룹 병합: ${groupCountBefore}개 그룹 → ${groupCountAfter}개 그룹`);
+// 예시 5개 출력
+let exampleCount = 0;
+for (const [parentId, subList] of subs) {
+  for (const sub of subList) {
+    if (exampleCount >= 5) break;
+    console.log(`  ${sub.baseId}→${parentId} (${sub.members.join('·')})`);
+    exampleCount++;
+  }
+  if (exampleCount >= 5) break;
+}
 
 const compNotesOv: Record<string, string> = existsSync('data/overrides/component-notes.json')
   ? json<Record<string, string>>('data/overrides/component-notes.json')
@@ -52,7 +78,7 @@ for (const target of Object.values(groupsOv.moves)) {
 }
 
 // --- 중간 부품(part) 탐지 및 삽입 ---
-const allComps = expandComponents(direct);
+const allComps = allCompsForGroups;
 const kanjiByGroup = new Map<string, KanjiEntry[]>();
 for (const k of kanji) {
   const list = kanjiByGroup.get(k.groupId) ?? [];
@@ -90,7 +116,8 @@ for (const k of kanji) {
 }
 for (const group of built.groups) {
   const members = kanjiByGroupUpdated.get(group.id) ?? [];
-  group.kanji = orderGroupKanji(group, members, parts);
+  const groupSubs = subs.get(group.id) ?? [];
+  group.kanji = orderGroupKanji(group, members, parts, groupSubs);
 }
 
 console.log(`부품 ${parts.length}개 추가`);
