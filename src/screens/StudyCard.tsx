@@ -1,4 +1,4 @@
-import type { KanjiEntry, KanjiGroup, WordEntry } from '../types';
+import type { KanjiEntry, KanjiGroup, VariantInfo, WordEntry } from '../types';
 
 interface Props {
   kanji: KanjiEntry;
@@ -7,13 +7,14 @@ interface Props {
   index: number;  // 0-based
   total: number;
   componentNames: Record<string, string>;
+  variants: Record<string, VariantInfo>;
   onPrev: () => void;
   onNext: () => void;
   onJump: (kanjiId: string) => void;
   onLearned: (kanjiId: string) => void;
 }
 
-export default function StudyCard({ kanji, group, words, index, total, componentNames, onPrev, onNext, onJump, onLearned }: Props) {
+export default function StudyCard({ kanji, group, words, index, total, componentNames, variants, onPrev, onNext, onJump, onLearned }: Props) {
   const examples = words.filter((w) => w.kanji.includes(kanji.id)).slice(0, 4);
   const siblings = group.kanji.filter((id) => id !== kanji.id);
 
@@ -38,7 +39,10 @@ export default function StudyCard({ kanji, group, words, index, total, component
         </div>
         {kanji.components && kanji.components.length > 0 && (
           <div className="muted" style={{ fontSize: 14, marginTop: 6 }}>
-            구성: {kanji.components.map((c) => `${c}(${componentNames[c] ?? '?'})`).join(' + ')}
+            구성: {kanji.components.map((c) => {
+              const v = variants[c];
+              return v ? `(${v.base}→${c}) ${v.name}` : `${c}(${componentNames[c] ?? '?'})`;
+            }).join(' + ')}
           </div>
         )}
         {kanji.componentNote && (

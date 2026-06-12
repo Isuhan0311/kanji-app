@@ -105,6 +105,10 @@ writeFileSync(
   'public/data/components.json',
   readFileSync('data/overrides/component-names.json', 'utf8'),
 );
+writeFileSync(
+  'public/data/variants.json',
+  readFileSync('data/overrides/variant-radicals.json', 'utf8'),
+);
 
 // Tatoeba 파일을 한 번만 읽어 4개 레벨에서 재사용
 const jpnTsv = raw('jpn_sentences.tsv');

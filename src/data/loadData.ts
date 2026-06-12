@@ -1,4 +1,4 @@
-import type { KanjiGroup, Level, LevelBundle } from '../types';
+import type { KanjiGroup, Level, LevelBundle, VariantInfo } from '../types';
 
 const cache = new Map<string, unknown>();
 
@@ -18,3 +18,4 @@ async function fetchJson<T>(name: string): Promise<T> {
 export const loadLevel = (level: Level) => fetchJson<LevelBundle>(level);
 export const loadGroups = () => fetchJson<KanjiGroup[]>('groups');
 export const loadComponentNames = () => fetchJson<Record<string, string>>('components');
+export const loadVariants = () => fetchJson<Record<string, VariantInfo>>('variants');

@@ -11,7 +11,7 @@ const FIX_COMP_NAMES: Record<string, string> = { '亻': '사람인변', '木': '
 function renderCard(over: Partial<Parameters<typeof StudyCard>[0]> = {}) {
   return render(
     <StudyCard kanji={kyuu} group={FIX_GROUPS[0]} words={FIX_WORDS}
-      index={1} total={3} componentNames={FIX_COMP_NAMES}
+      index={1} total={3} componentNames={FIX_COMP_NAMES} variants={{}}
       onPrev={noop} onNext={noop} onJump={noop} onLearned={noop} {...over} />,
   );
 }
@@ -26,9 +26,17 @@ test('훈음·읽기·예시 단어·설명을 보여준다', () => {
   expect(screen.getByText('木의 파생 2/3')).toBeTruthy();
 });
 
-test('구성요소 이름을 보여준다', () => {
+test('구성요소 이름을 보여준다 (변형 없음)', () => {
   renderCard();
   expect(screen.getByText(/亻\(사람인변\) \+ 木\(나무 목\)/)).toBeTruthy();
+});
+
+test('변형 부수가 있으면 원형→변형 형식으로 보여준다', () => {
+  renderCard({
+    variants: { '亻': { base: '人', name: '사람 인' } },
+    componentNames: { '木': '나무 목' },
+  });
+  expect(screen.getByText(/\(人→亻\) 사람 인 \+ 木\(나무 목\)/)).toBeTruthy();
 });
 
 test('같은 그룹의 다른 한자를 누르면 onJump가 호출된다', () => {
@@ -67,7 +75,7 @@ const partGroup: Parameters<typeof StudyCard>[0]['group'] = {
 test('isPart=true이면 "부품" 배지가 보이고 획수 표시가 없다', () => {
   render(
     <StudyCard kanji={partKanji} group={partGroup} words={[]}
-      index={2} total={5} componentNames={FIX_COMP_NAMES}
+      index={2} total={5} componentNames={FIX_COMP_NAMES} variants={{}}
       onPrev={noop} onNext={noop} onJump={noop} onLearned={noop} />,
   );
   expect(screen.getByText('부품')).toBeTruthy();

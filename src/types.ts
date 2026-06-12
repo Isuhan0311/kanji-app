@@ -45,3 +45,8 @@ export interface LevelBundle {
   words: WordEntry[];
   sentences: SentenceEntry[];
 }
+
+export interface VariantInfo {
+  base: string;
+  name: string;
+}

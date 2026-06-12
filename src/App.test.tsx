@@ -12,6 +12,7 @@ beforeEach(() => {
       const u = String(url);
       if (u.includes('groups')) return FIX_GROUPS;
       if (u.includes('components')) return {};
+      if (u.includes('variants')) return {};
       return { kanji: FIX_KANJI, words: [], sentences: [] };
     },
   })));
