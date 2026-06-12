@@ -10,6 +10,6 @@
     "noEmit": true,
     "types": ["vitest/globals", "node", "vite/client"]
   },
-  "include": ["src"],
-  "exclude": ["scripts"]
+  "include": ["src", "scripts"],
+  "exclude": ["scripts/make-icons.ts"]
 }
