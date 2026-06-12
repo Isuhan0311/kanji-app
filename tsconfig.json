@@ -10,5 +10,6 @@
     "noEmit": true,
     "types": ["vitest/globals", "node", "vite/client"]
   },
-  "include": ["src", "scripts"]
+  "include": ["src"],
+  "exclude": ["scripts"]
 }
