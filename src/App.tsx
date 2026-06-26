@@ -1,4 +1,5 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Capacitor } from '@capacitor/core';
 import type { KanjiGroup, Level, LevelBundle, Scope, VariantInfo } from './types';
 import { LEVELS } from './types';
 import { loadGroups, loadLevel, loadComponentNames, loadVariants } from './data/loadData';
@@ -58,6 +59,20 @@ export default function App() {
       }
       void refreshStats();
     })();
+  }, []);
+
+  // Android hardware back button: go home, or exit the app if already home.
+  const routeRef = useRef(route);
+  routeRef.current = route;
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const handle = import('@capacitor/app').then(({ App: CapApp }) =>
+      CapApp.addListener('backButton', () => {
+        if (routeRef.current.name === 'home') void CapApp.exitApp();
+        else setRoute({ name: 'home' });
+      }),
+    );
+    return () => { void handle.then((h) => h.remove()); };
   }, []);
 
   if (error) {

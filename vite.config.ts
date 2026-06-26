@@ -2,13 +2,18 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// Native (Capacitor) builds skip the PWA service worker: assets are served
+// from a local origin inside the WebView, so the SW is unneeded and its
+// caching/update logic only causes conflicts.
+const isCapBuild = !!process.env.CAP_BUILD;
+
 export default defineConfig({
   base: '/kanji-app/',
   plugins: [
     react(),
-    VitePWA({
+    ...(isCapBuild ? [] : [VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['apple-touch-icon.png', 'fonts/*.woff2'],
+      includeAssets: ['apple-touch-icon.png'],
       workbox: {
         globPatterns: ['**/*.{js,css,html,json,png,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
@@ -26,7 +31,7 @@ export default defineConfig({
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
         ],
       },
-    }),
+    })]),
   ],
   test: {
     environment: 'jsdom',

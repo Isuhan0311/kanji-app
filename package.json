@@ -6,22 +6,33 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:app": "tsc && cross-env CAP_BUILD=1 vite build --base ./",
+    "cap:sync": "cap sync android",
+    "cap:open": "cap open android",
+    "android": "npm run build:app && npm run cap:sync",
     "preview": "vite preview",
     "test": "vitest run",
     "download:data": "tsx scripts/build-data/download.ts",
     "build:data": "tsx scripts/build-data/build.ts"
   },
   "dependencies": {
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
     "idb": "^8.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.4.1",
     "@testing-library/react": "^16.0.0",
     "@types/node": "^20.14.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
+    "cross-env": "^10.1.0",
     "fake-indexeddb": "^6.0.0",
     "jsdom": "^24.1.0",
     "sharp": "^0.35.0",
