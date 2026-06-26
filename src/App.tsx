@@ -10,6 +10,8 @@ import Review from './screens/Review';
 import Quiz, { type QuizOutcome } from './screens/Quiz';
 import QuizResult from './screens/QuizResult';
 import WrongNotes from './screens/WrongNotes';
+import KanjiQuiz from './screens/KanjiQuiz';
+import { buildKanjiQuizPool } from './quiz/kanjiQuizData';
 
 type Route =
   | { name: 'home' }
@@ -17,7 +19,8 @@ type Route =
   | { name: 'review'; ids: string[] }
   | { name: 'quiz'; scope: Scope; questions: Question[] }
   | { name: 'result'; scope: Scope; results: QuizOutcome[] }
-  | { name: 'wrong' };
+  | { name: 'wrong' }
+  | { name: 'kanjiQuiz' };
 
 interface Data {
   groups: KanjiGroup[];
@@ -137,7 +140,8 @@ export default function App() {
           onOpenGroup={(groupId, scope) => setRoute({ name: 'study', groupId, scope, index: 0 })}
           onReview={(scope) => startReview(scopeKanji(scope).map((k) => k.id))}
           onQuiz={startQuiz}
-          onWrongNotes={() => setRoute({ name: 'wrong' })} />
+          onWrongNotes={() => setRoute({ name: 'wrong' })}
+          onKanjiQuiz={() => setRoute({ name: 'kanjiQuiz' })} />
       );
       break;
     case 'study': {
@@ -200,6 +204,13 @@ export default function App() {
           onStudy={goStudy} onReviewWrong={startReview} />
       );
       break;
+    case 'kanjiQuiz': {
+      const allWords = LEVELS.flatMap((l) => data.bundles[l].words);
+      const allSentences = LEVELS.flatMap((l) => data.bundles[l].sentences);
+      const quizItems = buildKanjiQuizPool(allKanji, allWords, allSentences);
+      screen = <KanjiQuiz items={quizItems} onHome={() => setRoute({ name: 'home' })} />;
+      break;
+    }
   }
 
   return (

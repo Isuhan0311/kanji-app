@@ -12,9 +12,10 @@ interface Props {
   onReview: (scope: Scope) => void;
   onQuiz: (scope: Scope) => void;
   onWrongNotes: () => void;
+  onKanjiQuiz: () => void;
 }
 
-export default function Home({ groups, kanji, learned, onOpenGroup, onReview, onQuiz, onWrongNotes }: Props) {
+export default function Home({ groups, kanji, learned, onOpenGroup, onReview, onQuiz, onWrongNotes, onKanjiQuiz }: Props) {
   const [scope, setScope] = useState<Scope>('N5');
   const [page, setPage] = useState(0);
 
@@ -50,7 +51,8 @@ export default function Home({ groups, kanji, learned, onOpenGroup, onReview, on
       </div>
       <div className="row" style={{ margin: '12px 0' }}>
         <button onClick={() => onReview(scope)}>{scopeLabel} 복습</button>
-        <button onClick={() => onQuiz(scope)}>{scopeLabel} 퀴즈</button>
+        <button onClick={() => onQuiz(scope)}>{scopeLabel} 단어 퀴즈</button>
+        <button onClick={onKanjiQuiz}>한자 퀴즈</button>
       </div>
       {pageItems.map((g) => {
         const members = byGroup.get(g.id)!;

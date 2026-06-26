@@ -9,7 +9,7 @@ const noop = () => {};
 function renderHome(onOpenGroup = noop as (g: string, s: Scope) => void) {
   return render(
     <Home groups={FIX_GROUPS} kanji={FIX_KANJI} learned={new Set(['休'])}
-      onOpenGroup={onOpenGroup} onReview={noop} onQuiz={noop} onWrongNotes={noop} />,
+      onOpenGroup={onOpenGroup} onReview={noop} onQuiz={noop} onWrongNotes={noop} onKanjiQuiz={noop} />,
   );
 }
 
@@ -55,7 +55,7 @@ describe('Home', () => {
   test('12개 그룹: 1페이지에 10개만 보이고, 다음 클릭 시 11번째가 보인다', () => {
     render(
       <Home groups={MANY_GROUPS} kanji={MANY_KANJI} learned={new Set()}
-        onOpenGroup={noop} onReview={noop} onQuiz={noop} onWrongNotes={noop} />,
+        onOpenGroup={noop} onReview={noop} onQuiz={noop} onWrongNotes={noop} onKanjiQuiz={noop} />,
     );
     // 첫 페이지: 그룹0~9 보임, 그룹10 안 보임
     expect(screen.getByText('그룹0')).toBeTruthy();
@@ -73,7 +73,7 @@ describe('Home', () => {
   test('레벨을 바꾸면 페이지가 초기화된다', () => {
     render(
       <Home groups={[...MANY_GROUPS, ...FIX_GROUPS]} kanji={[...MANY_KANJI, ...FIX_KANJI]}
-        learned={new Set()} onOpenGroup={noop} onReview={noop} onQuiz={noop} onWrongNotes={noop} />,
+        learned={new Set()} onOpenGroup={noop} onReview={noop} onQuiz={noop} onWrongNotes={noop} onKanjiQuiz={noop} />,
     );
     // 다음 페이지로 이동
     fireEvent.click(screen.getByRole('button', { name: '다음' }));
