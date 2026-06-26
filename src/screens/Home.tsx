@@ -13,9 +13,16 @@ interface Props {
   onQuiz: (scope: Scope) => void;
   onWrongNotes: () => void;
   onKanjiQuiz: () => void;
+  accuracy?: number | null;
 }
 
-export default function Home({ groups, kanji, learned, onOpenGroup, onReview, onQuiz, onWrongNotes, onKanjiQuiz }: Props) {
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+function todayLabel() {
+  const d = new Date();
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 ${WEEKDAYS[d.getDay()]}요일`;
+}
+
+export default function Home({ groups, kanji, learned, onOpenGroup, onReview, onQuiz, onWrongNotes, onKanjiQuiz, accuracy = null }: Props) {
   const [scope, setScope] = useState<Scope>('N5');
   const [page, setPage] = useState(0);
 
@@ -35,7 +42,26 @@ export default function Home({ groups, kanji, learned, onOpenGroup, onReview, on
 
   return (
     <div>
-      <h1>한자 학습</h1>
+      <div className="dash-head">
+        <div>
+          <div className="dash-date">{todayLabel()}</div>
+          <h2 className="dash-greet">안녕하세요 👋</h2>
+        </div>
+      </div>
+      <div className="stat-row">
+        <div className="stat-card">
+          <div className="stat-label">외운 한자</div>
+          <div className="stat-value accent">{learned.size}<span className="stat-unit">자</span></div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">전체 한자</div>
+          <div className="stat-value">{kanji.length}<span className="stat-unit">자</span></div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">평균 정답률</div>
+          <div className="stat-value">{accuracy == null ? '—' : <>{accuracy}<span className="stat-unit">%</span></>}</div>
+        </div>
+      </div>
       <div className="row">
         {LEVELS.map((l) => (
           <button key={l} onClick={() => changeScope(l)}

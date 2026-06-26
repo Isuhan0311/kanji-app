@@ -11,6 +11,7 @@ import Quiz, { type QuizOutcome } from './screens/Quiz';
 import QuizResult from './screens/QuizResult';
 import WrongNotes from './screens/WrongNotes';
 import KanjiQuiz from './screens/KanjiQuiz';
+import Sidebar, { type NavKey } from './screens/Sidebar';
 import { buildKanjiQuizPool } from './quiz/kanjiQuizData';
 
 type Route =
@@ -75,6 +76,10 @@ export default function App() {
   const learned = new Set(
     [...stats.values()].filter((s) => s.learned).map((s) => s.id),
   );
+
+  let seenTotal = 0, correctTotal = 0;
+  for (const s of stats.values()) { seenTotal += s.seen; correctTotal += s.correct; }
+  const accuracy = seenTotal > 0 ? Math.round((correctTotal / seenTotal) * 100) : null;
 
   const record = (id: string, correct: boolean) =>
     recordAnswer(id, correct).then(refreshStats).catch(() => setStorageOk(false));
@@ -141,7 +146,8 @@ export default function App() {
           onReview={(scope) => startReview(scopeKanji(scope).map((k) => k.id))}
           onQuiz={startQuiz}
           onWrongNotes={() => setRoute({ name: 'wrong' })}
-          onKanjiQuiz={() => setRoute({ name: 'kanjiQuiz' })} />
+          onKanjiQuiz={() => setRoute({ name: 'kanjiQuiz' })}
+          accuracy={accuracy} />
       );
       break;
     case 'study': {
@@ -213,18 +219,33 @@ export default function App() {
     }
   }
 
+  const activeNav: NavKey =
+    route.name === 'kanjiQuiz' || route.name === 'quiz' || route.name === 'result'
+      ? 'quiz'
+      : route.name === 'study' || route.name === 'review'
+        ? 'study'
+        : 'home';
+
+  const navigate = (key: NavKey) => {
+    if (key === 'quiz') setRoute({ name: 'kanjiQuiz' });
+    else setRoute({ name: 'home' });
+  };
+
   return (
-    <>
-      {route.name !== 'home' && (
-        <button className="muted" style={{ marginBottom: 8 }}
-          onClick={() => setRoute({ name: 'home' })}>← 홈</button>
-      )}
-      {!storageOk && (
-        <div className="muted" style={{ marginBottom: 8 }}>
-          ⚠ 이 브라우저에서는 진도가 저장되지 않아요 (시크릿 모드 등)
-        </div>
-      )}
-      {screen}
-    </>
+    <div className="app-shell">
+      <Sidebar active={activeNav} onNavigate={navigate} />
+      <main className="app-main">
+        {route.name !== 'home' && (
+          <button className="muted" style={{ marginBottom: 8 }}
+            onClick={() => setRoute({ name: 'home' })}>← 홈</button>
+        )}
+        {!storageOk && (
+          <div className="muted" style={{ marginBottom: 8 }}>
+            ⚠ 이 브라우저에서는 진도가 저장되지 않아요 (시크릿 모드 등)
+          </div>
+        )}
+        {screen}
+      </main>
+    </div>
   );
 }

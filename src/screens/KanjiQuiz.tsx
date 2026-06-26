@@ -154,7 +154,7 @@ function EasyReading({ item, all, onResult, onNext, type }: ModeProps & { type: 
         <div className="kanji-glyph kq-card-kanji">{item.k}</div>
         <div className="kq-card-hint">
           <span className={`kq-tag ${type === 'on' ? 'kq-tag-on' : 'kq-tag-kun'}`}>{type === 'on' ? '음독' : '훈독'}</span>
-          {' '}읽기를 고르세요{ex && <><br />예) {ex}</>}
+          {' '}읽기를 고르세요{ex && <><br /><span className="kq-card-eg">예) {ex}</span></>}
         </div>
       </div>
       <ChoiceGrid item={item} options={opts} correct={correct} onResult={onResult} onNext={onNext} />
@@ -169,7 +169,7 @@ function EasyMeaning({ item, all, onResult, onNext }: ModeProps) {
     <>
       <div className="kq-card">
         <div className="kanji-glyph kq-card-kanji">{item.k}</div>
-        <div className="kq-card-hint">의미를 고르세요 · 예) {item.onw}（{item.onwr}）</div>
+        <div className="kq-card-hint">의미를 고르세요 <span className="kq-card-eg">· 예) {item.onw}（{item.onwr}）</span></div>
       </div>
       <ChoiceGrid item={item} options={opts} correct={item.m} onResult={onResult} onNext={onNext} />
     </>
@@ -407,6 +407,7 @@ export default function KanjiQuiz({ items, onHome }: Props) {
   };
 
   const item = queue[idx];
+  const correctCount = results.filter((r) => r.ok).length;
 
   const modeProps: ModeProps = { item, all: queue, onResult: handleResult, onNext: handleNext };
 
@@ -455,6 +456,9 @@ export default function KanjiQuiz({ items, onHome }: Props) {
         ))}
       </div>
       {content}
+      {!done && !isMatchMode && (
+        <div className="kq-score">점수 {correctCount} / {results.length}</div>
+      )}
     </div>
   );
 }

@@ -8,9 +8,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['apple-touch-icon.png'],
+      includeAssets: ['apple-touch-icon.png', 'fonts/*.woff2'],
       workbox: {
-        globPatterns: ['**/*.{js,css,html,json,png,svg}'],
+        globPatterns: ['**/*.{js,css,html,json,png,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
       },
       manifest: {
